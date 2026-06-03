@@ -14,6 +14,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libzip-dev \
     git \
+    && curl -fsSL https://github.com/phpredis/phpredis/archive/refs/tags/6.3.0.tar.gz -o /tmp/phpredis.tar.gz \
+    && mkdir -p /usr/src/php/ext/redis \
+    && tar -xf /tmp/phpredis.tar.gz -C /usr/src/php/ext/redis --strip-components=1 \
+    && rm /tmp/phpredis.tar.gz \
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     pdo_pgsql \
@@ -22,8 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     bcmath \
     soap \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+    redis \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -65,6 +68,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Copy app from builder
 WORKDIR /var/www
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
 COPY --from=builder /var/www /var/www
 
 # Permissions fix
